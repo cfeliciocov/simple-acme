@@ -22,6 +22,7 @@ namespace PKISharp.WACS.Context
         public ValidationPluginOptions Options { get; } = options;
         public TargetPart TargetPart { get; } = targetPart;
         public AcmeAuthorization Authorization { get; } = authorization.Authorization;
+        public string AuthorizationUri { get; } = authorization.Uri;
         public string Label { get; } = authorization.Label;
         public string Name { get; } = plugin.Name;
     }
@@ -40,6 +41,7 @@ namespace PKISharp.WACS.Context
             Label = parameters.Label;
             TargetPart = parameters.TargetPart;
             Authorization = parameters.Authorization;
+            AuthorizationUri = parameters.AuthorizationUri;
             OrderResult = parameters.OrderContext.OrderResult;
             Scope = scope;
             PluginName = parameters.Name;
@@ -57,6 +59,7 @@ namespace PKISharp.WACS.Context
         public OrderResult OrderResult { get; }
         public TargetPart? TargetPart { get; }
         public AcmeAuthorization Authorization { get; set; }
+        public string AuthorizationUri { get; }
         public AcmeChallenge? Challenge { get; set; }
         public IChallengeValidationDetails? ChallengeDetails { get; set; }
         public IValidationPlugin ValidationPlugin { get; set; }

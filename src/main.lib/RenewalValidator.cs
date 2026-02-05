@@ -444,6 +444,55 @@ namespace PKISharp.WACS
                 }
                 else
                 {
+                    var retryCount = settings.Acme.RetryCount;
+                    var retryInterval = settings.Acme.RetryInterval;
+                    log.Information(
+                        "[{identifier}] Pre-authorized selected but authorization is {status}, waiting up to {count}x{interval}s",
+                        context.Label,
+                        context.Authorization.Status,
+                        retryCount,
+                        retryInterval);
+
+                    var acmeClient = context.Scope.Resolve<AcmeClient>();
+                    for (var attempt = 0; attempt < retryCount; attempt++)
+                    {
+                        if (context.Authorization.Status == AcmeClient.AuthorizationInvalid)
+                        {
+                            break;
+                        }
+
+                        // Attempt 1 is immediate; subsequent attempts wait
+                        if (attempt > 0)
+                        {
+                            await Task.Delay(retryInterval * 1000);
+                        }
+                        try
+                        {
+                            context.Authorization = await acmeClient.GetAuthorizationDetails(context.AuthorizationUri);
+                            log.Verbose(
+                                "[{identifier}] Pre-authorized polling attempt {attempt}/{total}: {status}",
+                                context.Label,
+                                attempt + 1,
+                                retryCount,
+                                context.Authorization.Status);
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Verbose(
+                                ex,
+                                "[{identifier}] Pre-authorized polling attempt {attempt}/{total} failed",
+                                context.Label,
+                                attempt + 1,
+                                retryCount);
+                        }
+
+                        if (context.Authorization.Status == AcmeClient.AuthorizationValid)
+                        {
+                            log.Information("[{identifier}] Pre-authorized after waiting, skip validation", context.Label);
+                            return;
+                        }
+                    }
+
                     log.Error("[{identifier}] Domain is not pre-authorized as expected", context.Label);
                     context.OrderResult.AddErrorMessage("Domain is not pre-authorized as expected", !context.Valid);
                 }
